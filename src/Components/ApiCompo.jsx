@@ -15,6 +15,7 @@ function ApiCompo() {
     const resp = await res.json();
     setData(resp);
     setPagination(parsePaginationHeaders(res.headers));
+    preloadImages(resp); // Preload images after setting the data state
   }
 
   const handleImageError = (event) => {
@@ -22,22 +23,7 @@ function ApiCompo() {
   };
 
   useEffect(() => {
-    const preloadImages = async () => {
-      const imagePromises = data.map((btc) => {
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => resolve();
-          img.onerror = () => resolve(); // Continue even if image fails to load
-          img.src = imageSource(btc);
-        });
-      });
-
-      await Promise.all(imagePromises);
-      setImagesLoaded(true);
-    };
-
     Getclubapi(`${api_url}${Club}?_page=1&_limit=20`);
-    preloadImages();
   }, [Club]);
 
   const handleClubChange = (e) => {
@@ -86,6 +72,21 @@ function ApiCompo() {
       return paginationData;
     }
     return null;
+  };
+
+  const preloadImages = (data) => {
+    const imagePromises = data.map((btc) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve(); // Continue even if image fails to load
+        img.src = imageSource(btc);
+      });
+    });
+
+    Promise.all(imagePromises).then(() => {
+      setImagesLoaded(true);
+    });
   };
 
   return (
