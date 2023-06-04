@@ -10,13 +10,14 @@ function ApiCompo() {
   const api_url = `https://json-production-535e.up.railway.app/`;
   const fallbackImage = 'public/available.png';
 
-  async function Getclubapi(url) {
+  const Getclubapi = async (url) => {
     const res = await fetch(url);
     const resp = await res.json();
     setData(resp);
     setPagination(parsePaginationHeaders(res.headers));
-    preloadImages(resp); // Preload images after setting the data state
-  }
+    await preloadImages(resp); // Preload images after setting the data state
+    setImagesLoaded(true);
+  };
 
   const handleImageError = (event) => {
     event.target.src = fallbackImage;
@@ -45,13 +46,7 @@ function ApiCompo() {
   const imageSource = (btc) => {
     const imageName = btc.name.split('.btc')[0];
     const imageUrl = `https://btcdomains.io/images/domain/${imageName}.jpeg`;
-    const img = new Image();
-    img.src = imageUrl;
-    if (img.complete) {
-      return imageUrl;
-    } else {
-      return fallbackImage;
-    }
+    return imageUrl;
   };
 
   const parsePaginationHeaders = (headers) => {
@@ -74,7 +69,7 @@ function ApiCompo() {
     return null;
   };
 
-  const preloadImages = (data) => {
+  const preloadImages = async (data) => {
     const imagePromises = data.map((btc) => {
       return new Promise((resolve) => {
         const img = new Image();
@@ -84,9 +79,7 @@ function ApiCompo() {
       });
     });
 
-    Promise.all(imagePromises).then(() => {
-      setImagesLoaded(true);
-    });
+    await Promise.all(imagePromises);
   };
 
   return (
