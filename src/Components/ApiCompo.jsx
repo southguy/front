@@ -5,6 +5,7 @@ function ApiCompo() {
   const [data, setData] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [searchValue, setSearchValue] = useState('');
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
   const api_url = `https://json-production-535e.up.railway.app/`;
   const fallbackImage = 'public/available.png';
@@ -21,14 +22,27 @@ function ApiCompo() {
   };
 
   useEffect(() => {
+    const preloadImages = async () => {
+      const imagePromises = data.map((btc) => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve();
+          img.onerror = () => resolve(); // Continue even if image fails to load
+          img.src = imageSource(btc);
+        });
+      });
+
+      await Promise.all(imagePromises);
+      setImagesLoaded(true);
+    };
+
     Getclubapi(`${api_url}${Club}?_page=1&_limit=20`);
+    preloadImages();
   }, [Club]);
 
   const handleClubChange = (e) => {
     const value = e.target.value;
-   
-      setClub(value.split('.btc')[0]);
-    
+    setClub(value.split('.btc')[0]);
   };
 
   const handlePagination = (url) => {
@@ -102,26 +116,27 @@ function ApiCompo() {
         </div>
       </div>
       <div className="divider"></div>
-      <div className="flex flex-wrap justify-center">
-  {data.map((btc) => (
-    <div key={btc.id} className="w-1/2 sm:w-1/4 p-3 shadow">
-      <div className="card">
-        <figure className="px-10 pt-10">
-          <img
-            src={imageSource(btc)}
-            alt="btcdomain"
-            className="rounded-xl max-w-full"
-            onError={handleImageError}
-          />
-        </figure>
-        <div className="card-body items-center text-center">
-          <h2 className="card-title text-sm">{btc.name}</h2>
+      {imagesLoaded && (
+        <div className="flex flex-wrap justify-center">
+          {data.map((btc) => (
+            <div key={btc.id} className="w-1/2 sm:w-1/4 p-3 shadow">
+              <div className="card">
+                <figure className="px-10 pt-10">
+                  <img
+                    src={imageSource(btc)}
+                    alt="btcdomain"
+                    className="rounded-xl max-w-full"
+                    onError={handleImageError}
+                  />
+                </figure>
+                <div className="card-body items-center text-center">
+                  <h2 className="card-title text-sm">{btc.name}</h2>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
-    </div>
-  ))}
-</div>
-
+      )}
       {pagination && (
         <div className="join flex flex-cols-2 gap-3 justify-center items-center p-3 mb-1">
           {pagination.prev && (
